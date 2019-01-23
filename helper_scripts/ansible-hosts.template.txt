@@ -16,7 +16,7 @@ openshift_disable_check=memory_availability,disk_availability,docker_image_avail
 openshift_rolling_restart_mode=services
 
 
-openshift_release=v3.11
+openshift_release=v3.9
 
 openshift_check_min_host_memory_gb=8
 openshift_disable_check=docker_image_availability,docker_storage,disk_availability
