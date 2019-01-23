@@ -1,0 +1,135 @@
+
+[OSEv3:children]
+masters
+etcd
+nodes
+glusterfs
+glusterfs_registry
+
+[OSEv3:vars]
+ansible_ssh_user=root
+ansible_become=true
+openshift_install_examples=true
+openshift_deployment_type=openshift-enterprise
+openshift_clock_enabled=true
+openshift_disable_check=memory_availability,disk_availability,docker_image_availability,docker_storage
+openshift_rolling_restart_mode=services
+
+
+openshift_release=v3.11
+
+openshift_check_min_host_memory_gb=8
+openshift_disable_check=docker_image_availability,docker_storage,disk_availability
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=master-c7c1437953a7d6a4.elb.us-east-2.amazonaws.com
+openshift_master_cluster_public_hostname=master-c7c1437953a7d6a4.elb.us-east-2.amazonaws.com
+
+openshift_master_default_subdomain=infra-742704392.us-east-2.elb.amazonaws.com
+os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+
+containerized=true
+
+openshift_metrics_start_cluster=true
+openshift_metrics_install_metrics=false
+#openshift_metrics_hawkular_hostname=hawkular-metrics.infra-742704392.us-east-2.elb.amazonaws.com
+openshift_metrics_cassandra_replicas=3
+openshift_metrics_cassandra_pvc_size=20Gi
+openshift_metrics_storage_kind=dynamic
+openshift_metrics_cassandra_nodeselector={"role": "infra"}
+openshift_metrics_hawkular_nodeselector={"role": "infra"}
+openshift_metrics_heapster_nodeselector={"role": "infra"}
+
+openshift_logging_install_logging=false
+#openshift_master_logging_public_url=https://kibana.infra-742704392.us-east-2.elb.amazonaws.com
+openshift_logging_kibana_hostname=kibana.infra-742704392.us-east-2.elb.amazonaws.com
+openshift_logging_curator_default_days=7
+openshift_logging_curator_nodeselector={"role": "infra"}
+openshift_logging_kibana_nodeselector={"role": "infra"}
+openshift_logging_es_nodeselector={"role": "infra"}
+openshift_logging_es_cluster_size=3
+openshift_logging_es_pvc_size=15Gi
+openshift_logging_es_pvc_dynamic=true
+
+# use htpasswd authentication with demo/demo
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'demo': '$apr1$.MaA77kd$Rlnn6RXq9kCjnEfh5I3w/.'}
+
+# put the router on dedicated infra node
+openshift_hosted_router_selector='region=infra'
+# put the image registry on dedicated infra node
+openshift_hosted_registry_selector='region=infra,role=infra,registry=default'
+
+openshift_hosted_registry_storage_kind=glusterfs
+openshift_hosted_registry_storage_volume_size=20Gi
+
+openshift_hosted_etcd_storage_kind=glusterfs
+openshift_hosted_etcd_storage_volume_size=1G
+
+openshift_hosted_prometheus_deploy=false
+openshift_prometheus_namespace=openshift-metrics
+openshift_prometheus_node_selector={"role":"infra"}
+
+dynamic_volumes_check=False
+
+## First CNS storage cluster for applications
+# Namespace for CNS pods (will be created)
+openshift_storage_glusterfs_namespace=app-storage
+# Automatically create a StorageClass referencing this CNS cluster
+openshift_storage_glusterfs_storageclass=true
+# glusterblock functionality is not supported outside of Logging/Metrics
+openshift_storage_glusterfs_block_deploy=false
+
+## Second CNS storage cluster for OpenShift infrastructure
+# Namespace for CNS pods (will be created)
+openshift_storage_glusterfs_registry_namespace=infra-storage
+# No StorageClass; this cluster should not need to provide dynamic provisioning
+openshift_storage_glusterfs_registry_storageclass=true
+openshift_storage_glusterfs_registry_block_deploy=true
+# Size of automatically created block-hosting volumes,
+# must be at least the size of your largest desired block volume
+openshift_storage_glusterfs_registry_block_host_vol_size=20
+# Create StorageClass, used by Logging and Metrics
+openshift_storage_glusterfs_registry_block_storageclass=true
+# StorageClass needs to be cluster default for Logging/Metrics provisioning
+openshift_storage_glusterfs_registry_block_storageclass_default=false
+
+openshift_storage_glusterfs_storageclass_default=true
+openshift_metrics_cassanda_pvc_storage_class_name=glusterfs-registry-block
+openshift_logging_es_pvc_storage_class_name=glusterfs-registry-block
+
+# project pods should be placed on primary nodes
+osm_default_node_selector='region=primary'
+
+osm_project_request_template='default/project-request'
+
+[masters]
+ip-10-0-1-73.us-east-2.compute.internal
+ip-10-0-5-244.us-east-2.compute.internal
+ip-10-0-9-253.us-east-2.compute.internal
+
+[etcd]
+ip-10-0-1-73.us-east-2.compute.internal
+ip-10-0-5-244.us-east-2.compute.internal
+ip-10-0-9-253.us-east-2.compute.internal
+
+[glusterfs_registry]
+ip-10-0-1-187.us-east-2.compute.internal glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=10.0.1.187 glusterfs_zone=1
+ip-10-0-5-47.us-east-2.compute.internal glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=10.0.5.47 glusterfs_zone=2
+ip-10-0-9-115.us-east-2.compute.internal glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=10.0.9.115 glusterfs_zone=3
+
+[glusterfs]
+ip-10-0-1-252.us-east-2.compute.internal glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=10.0.1.252 glusterfs_zone=1
+ip-10-0-5-31.us-east-2.compute.internal glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=10.0.5.31 glusterfs_zone=2
+ip-10-0-9-103.us-east-2.compute.internal glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=10.0.9.103 glusterfs_zone=3
+
+[nodes]
+ip-10-0-1-73.us-east-2.compute.internal openshift_hostname=ip-10-0-1-73.us-east-2.compute.internal openshift_public_hostname=master-c7c1437953a7d6a4.elb.us-east-2.amazonaws.com openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'master'}"
+ip-10-0-5-244.us-east-2.compute.internal openshift_hostname=ip-10-0-5-244.us-east-2.compute.internal openshift_public_hostname=master-c7c1437953a7d6a4.elb.us-east-2.amazonaws.com openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'master'}"
+ip-10-0-9-253.us-east-2.compute.internal openshift_hostname=ip-10-0-9-253.us-east-2.compute.internal openshift_public_hostname=master-c7c1437953a7d6a4.elb.us-east-2.amazonaws.com openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'master'}"
+ip-10-0-1-187.us-east-2.compute.internal openshift_hostname=ip-10-0-1-187.us-east-2.compute.internal openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'infra', 'registry': 'default'}"
+ip-10-0-5-47.us-east-2.compute.internal openshift_hostname=ip-10-0-5-47.us-east-2.compute.internal openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'infra', 'registry': 'default'}"
+ip-10-0-9-115.us-east-2.compute.internal openshift_hostname=ip-10-0-9-115.us-east-2.compute.internal openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'infra', 'registry': 'default'}"
+ip-10-0-1-252.us-east-2.compute.internal openshift_hostname=ip-10-0-1-252.us-east-2.compute.internal openshift_schedulable=true openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'worker'}"
+ip-10-0-5-31.us-east-2.compute.internal openshift_hostname=ip-10-0-5-31.us-east-2.compute.internal openshift_schedulable=true openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'worker'}"
+ip-10-0-9-103.us-east-2.compute.internal openshift_hostname=ip-10-0-9-103.us-east-2.compute.internal openshift_schedulable=true openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'worker'}"

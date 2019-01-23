@@ -1,0 +1,135 @@
+
+[OSEv3:children]
+masters
+etcd
+nodes
+glusterfs
+glusterfs_registry
+
+[OSEv3:vars]
+ansible_ssh_user=root
+ansible_become=true
+openshift_install_examples=true
+openshift_deployment_type=openshift-enterprise
+openshift_clock_enabled=true
+openshift_disable_check=memory_availability,disk_availability,docker_image_availability,docker_storage
+openshift_rolling_restart_mode=services
+
+
+openshift_release=v3.11
+
+openshift_check_min_host_memory_gb=8
+openshift_disable_check=docker_image_availability,docker_storage,disk_availability
+
+openshift_master_cluster_method=native
+openshift_master_cluster_hostname=${openshift_master_cluster_hostname}
+openshift_master_cluster_public_hostname=${openshift_master_cluster_public_hostname}
+
+openshift_master_default_subdomain=${public_subdomain}
+os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+
+containerized=true
+
+openshift_metrics_start_cluster=true
+openshift_metrics_install_metrics=false
+#openshift_metrics_hawkular_hostname=hawkular-metrics.${public_subdomain}
+openshift_metrics_cassandra_replicas=3
+openshift_metrics_cassandra_pvc_size=20Gi
+openshift_metrics_storage_kind=dynamic
+openshift_metrics_cassandra_nodeselector={"role": "infra"}
+openshift_metrics_hawkular_nodeselector={"role": "infra"}
+openshift_metrics_heapster_nodeselector={"role": "infra"}
+
+openshift_logging_install_logging=false
+#openshift_master_logging_public_url=https://kibana.${public_subdomain}
+openshift_logging_kibana_hostname=kibana.${public_subdomain}
+openshift_logging_curator_default_days=7
+openshift_logging_curator_nodeselector={"role": "infra"}
+openshift_logging_kibana_nodeselector={"role": "infra"}
+openshift_logging_es_nodeselector={"role": "infra"}
+openshift_logging_es_cluster_size=3
+openshift_logging_es_pvc_size=15Gi
+openshift_logging_es_pvc_dynamic=true
+
+# use htpasswd authentication with demo/demo
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'demo': '$apr1$.MaA77kd$Rlnn6RXq9kCjnEfh5I3w/.'}
+
+# put the router on dedicated infra node
+openshift_hosted_router_selector='region=infra'
+# put the image registry on dedicated infra node
+openshift_hosted_registry_selector='region=infra,role=infra,registry=default'
+
+openshift_hosted_registry_storage_kind=glusterfs
+openshift_hosted_registry_storage_volume_size=20Gi
+
+openshift_hosted_etcd_storage_kind=glusterfs
+openshift_hosted_etcd_storage_volume_size=1G
+
+openshift_hosted_prometheus_deploy=false
+openshift_prometheus_namespace=openshift-metrics
+openshift_prometheus_node_selector={"role":"infra"}
+
+dynamic_volumes_check=False
+
+## First CNS storage cluster for applications
+# Namespace for CNS pods (will be created)
+openshift_storage_glusterfs_namespace=app-storage
+# Automatically create a StorageClass referencing this CNS cluster
+openshift_storage_glusterfs_storageclass=true
+# glusterblock functionality is not supported outside of Logging/Metrics
+openshift_storage_glusterfs_block_deploy=false
+
+## Second CNS storage cluster for OpenShift infrastructure
+# Namespace for CNS pods (will be created)
+openshift_storage_glusterfs_registry_namespace=infra-storage
+# No StorageClass; this cluster should not need to provide dynamic provisioning
+openshift_storage_glusterfs_registry_storageclass=true
+openshift_storage_glusterfs_registry_block_deploy=true
+# Size of automatically created block-hosting volumes,
+# must be at least the size of your largest desired block volume
+openshift_storage_glusterfs_registry_block_host_vol_size=20
+# Create StorageClass, used by Logging and Metrics
+openshift_storage_glusterfs_registry_block_storageclass=true
+# StorageClass needs to be cluster default for Logging/Metrics provisioning
+openshift_storage_glusterfs_registry_block_storageclass_default=false
+
+openshift_storage_glusterfs_storageclass_default=true
+openshift_metrics_cassanda_pvc_storage_class_name=glusterfs-registry-block
+openshift_logging_es_pvc_storage_class_name=glusterfs-registry-block
+
+# project pods should be placed on primary nodes
+osm_default_node_selector='region=primary'
+
+osm_project_request_template='default/project-request'
+
+[masters]
+${master1_hostname}
+${master2_hostname}
+${master3_hostname}
+
+[etcd]
+${master1_hostname}
+${master2_hostname}
+${master3_hostname}
+
+[glusterfs_registry]
+${infra1_hostname} glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=${infra1_ip} glusterfs_zone=1
+${infra2_hostname} glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=${infra2_ip} glusterfs_zone=2
+${infra3_hostname} glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=${infra3_ip} glusterfs_zone=3
+
+[glusterfs]
+${worker1_hostname} glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=${worker1_ip} glusterfs_zone=1
+${worker2_hostname} glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=${worker2_ip} glusterfs_zone=2
+${worker3_hostname} glusterfs_devices='[ "/dev/xvdc" ]' glusterfs_ip=${worker3_ip} glusterfs_zone=3
+
+[nodes]
+${master1_hostname} openshift_hostname=${master1_hostname} openshift_public_hostname=${admin_hostname} openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'master'}"
+${master2_hostname} openshift_hostname=${master2_hostname} openshift_public_hostname=${admin_hostname} openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'master'}"
+${master3_hostname} openshift_hostname=${master3_hostname} openshift_public_hostname=${admin_hostname} openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'master'}"
+${infra1_hostname} openshift_hostname=${infra1_hostname} openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'infra', 'registry': 'default'}"
+${infra2_hostname} openshift_hostname=${infra2_hostname} openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'infra', 'registry': 'default'}"
+${infra3_hostname} openshift_hostname=${infra3_hostname} openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'infra', 'registry': 'default'}"
+${worker1_hostname} openshift_hostname=${worker1_hostname} openshift_schedulable=true openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'worker'}"
+${worker2_hostname} openshift_hostname=${worker2_hostname} openshift_schedulable=true openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'worker'}"
+${worker3_hostname} openshift_hostname=${worker3_hostname} openshift_schedulable=true openshift_node_labels="{'region': 'infra', 'zone': 'zone-1', 'role': 'worker'}"
