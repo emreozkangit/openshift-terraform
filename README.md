@@ -1,4 +1,1 @@
-# openshift-terraform
-
-https://medium.com/@emreozkan
-# openshift-terraform
+https://medium.com/@emreozkan/terraform-ile-aws-%C3%BCzerinde-glusterfsli-openshift-container-platform-kurulumu-8b3a7b1942c5
