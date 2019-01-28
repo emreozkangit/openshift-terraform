@@ -1,4 +1,4 @@
-# openshift-terraform
+Openshift 3.11  OKD installiation with Terraform
 
 
 export AWS_ACCESS_KEY_ID='**'
