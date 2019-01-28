@@ -13,6 +13,8 @@ export TF_VAR_domain='emreozkan.host'
 
 export TF_VAR_htpasswd='demo'
 
+Create s3 bucket on AWS
+
 -----
 
 terraform init
